@@ -20,5 +20,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/terms`, lastModified, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/llms.txt`, lastModified, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/llms-full.txt`, lastModified, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/api/agent-manifest`, lastModified, changeFrequency: "monthly", priority: 0.5 },
   ];
 }

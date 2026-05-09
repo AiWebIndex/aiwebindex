@@ -54,6 +54,7 @@ Status: ${site.protocolStatus}. Stewarded by ${site.steward.legalName}.
 ## Optional
 
 - [Long-form (every page concatenated as markdown)](${base}/llms-full.txt)
+- [Agent manifest (JSON describing the protocol)](${base}/api/agent-manifest)
 - [Sitemap (XML)](${base}/sitemap.xml)
 - [robots.txt](${base}/robots.txt)
 - [Source on GitHub](${site.repo})
