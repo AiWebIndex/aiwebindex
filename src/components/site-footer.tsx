@@ -68,7 +68,9 @@ export function SiteFooter() {
             </p>
             <p style={{ marginTop: 12, fontSize: "0.78rem" }}>
               &copy; {year} {site.steward.legalName}.{" "}
-              <Link href="/about">About</Link>.
+              <Link href="/about">About</Link> &middot;{" "}
+              <Link href="/privacy">Privacy</Link> &middot;{" "}
+              <Link href="/terms">Terms</Link>
             </p>
           </div>
         </div>
