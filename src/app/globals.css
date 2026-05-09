@@ -1,0 +1,389 @@
+@import "tailwindcss";
+
+/*
+  aiwebindex.org design system.
+
+  Deliberately different from lyrenth.com to keep the protocol/standards-body
+  positioning visually distinct from the Lyrenth product brand:
+
+    - Lyrenth uses Geist + Instrument Serif on a paper-and-ink palette
+      (warm cream + black + signal-green) -- product / SaaS / editorial.
+    - aiwebindex.org uses Inter + Source Serif 4 on a slate / blue-gray
+      palette -- documentation / RFC-editor / standards-body.
+
+  The reader should land on aiwebindex.org and feel "this is a spec
+  site, not a marketing site." That visual signal is load-bearing for
+  the open-protocol claim.
+*/
+
+@theme {
+  --color-bg: #ffffff;
+  --color-bg-soft: #f8fafc;        /* slate-50 */
+  --color-fg: #0f172a;             /* slate-900 */
+  --color-fg-2: #1e293b;           /* slate-800 */
+  --color-muted: #475569;          /* slate-600 -- legible body muted */
+  --color-mute-2: #64748b;         /* slate-500 -- chrome / footers */
+  --color-rule: #e2e8f0;           /* slate-200 */
+  --color-rule-2: #cbd5e1;         /* slate-300 */
+  --color-accent: #1e40af;         /* blue-800 -- primary link / accent */
+  --color-accent-2: #2563eb;       /* blue-600 -- hover / button */
+  --color-accent-soft: #eff6ff;    /* blue-50 -- soft backgrounds */
+  --color-code-bg: #0f172a;        /* slate-900 -- inverted code blocks */
+  --color-code-fg: #e2e8f0;        /* slate-200 */
+
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: var(--font-source-serif), "Iowan Old Style", "Apple Garamond",
+    "Baskerville", "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg-2);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11"; /* Inter alternate forms; harmless if unsupported */
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* Container: a centered max-width column with comfortable side padding. */
+.container-doc {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-doc {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Typography rhythm. Headings use Source Serif for that academic feel,
+   body stays in Inter. Tight letter-spacing on display sizes for
+   editorial weight without going Geist-tight. */
+h1.h-display {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--color-fg);
+}
+
+h2.h-section {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 2.2vw, 1.65rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+
+h3.h-sub {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: var(--color-fg);
+}
+
+/* Eyebrow / pre-heading microlabel. Matches what RFCs put above section
+   headings (e.g. "Section 4.2"). Mono, small, blue-accent. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* Body prose. Used inside .prose-doc wrapper so the styles only apply to
+   long-form documentation, not to chrome / nav / footer where we want
+   tighter control. */
+.prose-doc {
+  color: var(--color-fg-2);
+}
+
+.prose-doc p {
+  margin: 0 0 1rem;
+  line-height: 1.7;
+}
+
+.prose-doc p + p {
+  margin-top: 0;
+}
+
+.prose-doc a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.prose-doc a:hover {
+  color: var(--color-accent-2);
+}
+
+.prose-doc strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+
+.prose-doc code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--color-fg);
+}
+
+.prose-doc pre {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  background: var(--color-code-bg);
+  color: var(--color-code-fg);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin: 1rem 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.prose-doc pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.prose-doc ul,
+.prose-doc ol {
+  margin: 0 0 1rem;
+  padding-left: 1.4rem;
+  line-height: 1.7;
+}
+
+.prose-doc li {
+  margin: 0.25rem 0;
+}
+
+.prose-doc blockquote {
+  border-left: 3px solid var(--color-accent);
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background: var(--color-accent-soft);
+  color: var(--color-fg-2);
+  font-style: italic;
+}
+
+.prose-doc h2 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin: 2.5rem 0 1rem;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+
+.prose-doc h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--color-fg);
+}
+
+.prose-doc h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--color-fg);
+  letter-spacing: 0.01em;
+}
+
+.prose-doc hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 2rem 0;
+}
+
+/* Section divider between document sections. */
+.rule-soft {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+/* Section anchor link (the "§" mark next to spec headings). RFCs put a
+   permalink anchor next to every numbered heading so readers can cite
+   precise sections. We implement this as a hover-revealed § that
+   targets a same-page anchor. */
+.section-anchor {
+  color: var(--color-mute-2);
+  text-decoration: none;
+  margin-left: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+h2:hover > .section-anchor,
+h3:hover > .section-anchor,
+h4:hover > .section-anchor {
+  opacity: 1;
+}
+
+/* Pill: small status / version chip. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-rule-2);
+  background: var(--color-bg);
+  color: var(--color-fg-2);
+}
+
+.pill-blue {
+  background: var(--color-accent-soft);
+  border-color: rgba(30, 64, 175, 0.18);
+  color: var(--color-accent);
+}
+
+/* Buttons. Two variants: primary (filled blue) + secondary (ghost). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-2);
+}
+
+.btn-ghost {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border-color: var(--color-rule-2);
+}
+
+.btn-ghost:hover {
+  background: var(--color-bg-soft);
+  border-color: var(--color-mute-2);
+}
+
+/* Card: small framed block used on /implementations and /home tiles. */
+.card {
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-bg);
+  transition: border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--color-rule-2);
+}
+
+/* Top nav + footer chrome. Kept minimal; this is a documentation site,
+   not a marketing site. Links are text-link style, not button style. */
+.site-nav {
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-bg);
+}
+
+.site-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+}
+
+.site-nav a {
+  color: var(--color-fg-2);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.site-nav a:hover {
+  color: var(--color-accent);
+}
+
+.site-footer {
+  border-top: 1px solid var(--color-rule);
+  background: var(--color-bg-soft);
+  padding: 32px 0;
+  font-size: 0.82rem;
+  color: var(--color-mute-2);
+}
+
+.site-footer a {
+  color: var(--color-fg-2);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer p {
+  margin: 0.4rem 0;
+}
+
+/* Mark used inside the brand wordmark. Plain text, blue, no glyph: the
+   point is to look like a standards reference, not a logo-driven
+   product. The decision to NOT have a graphic logo is deliberate;
+   schema.org / rfc-editor.org / w3.org all use text wordmarks. */
+.wordmark {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+
+.wordmark .accent {
+  color: var(--color-accent);
+}
