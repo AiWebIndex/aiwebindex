@@ -17,6 +17,13 @@ This repository hosts:
 - Inter (sans) + Source Serif 4 (serif headings); chosen for academic / standards-body feel, deliberately distinct from Lyrenth's brand
 - Pure static site; no API, no database
 
+## License
+
+- **Code** (Next.js components, build configuration, layout) is licensed under the [MIT License](LICENSE).
+- **AIWebIndex specification text** (content under /spec, format references, and protocol prose) is licensed under [CC-BY-4.0](LICENSE-SPEC): free to share and adapt with attribution.
+
+The protocol itself is open and unpatented. See "Stewardship" below for the patent-free pledge.
+
 ## Local development
 
 ```bash
@@ -60,5 +67,9 @@ This site is deployed to Vercel. The production domain is `aiwebindex.org`.
 ## Stewardship
 
 `Aleksma AI Inc.` (Delaware corporation; 1111B S Governors Ave # 97667, Dover, DE 19904, USA) holds no patents on the protocol's core mechanics and pledges not to seek such patents.
+
+## Trademarks
+
+"AIWebIndex" and "Lyrenth" are trademarks of Aleksma AI Inc. The licenses above cover code and spec text. They do not grant rights to use the AIWebIndex or Lyrenth name, logos, or brand identity for your own implementation.
 
 Contact: hello@aiwebindex.org
