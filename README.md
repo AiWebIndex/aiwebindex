@@ -4,17 +4,17 @@ The home of the **AIWebIndex** open protocol. Stewarded by Aleksma AI Inc.
 
 This repository hosts:
 
-- `/` — landing page with the protocol mission and three CTAs
-- `/spec` — the formal AIWebIndex 1.0 specification (RFC-style)
-- `/implementations` — directory of products and projects implementing the protocol
-- `/implementing` — practical guide for someone building a conformant crawler
-- `/about` — why open, the patent pledge, governance
+- `/`: landing page with the protocol mission and three CTAs
+- `/spec`: the formal AIWebIndex 1.0 specification (RFC-style)
+- `/implementations`: directory of products and projects implementing the protocol
+- `/implementing`: practical guide for someone building a conformant crawler
+- `/about`: why open, the patent pledge, governance
 
 ## Stack
 
 - Next.js 16 (App Router) + React 19
 - Tailwind v4 (no separate config; tokens in `src/app/globals.css` via `@theme`)
-- Inter (sans) + Source Serif 4 (serif headings) — chosen for academic / standards-body feel, deliberately distinct from Lyrenth's brand
+- Inter (sans) + Source Serif 4 (serif headings); chosen for academic / standards-body feel, deliberately distinct from Lyrenth's brand
 - Pure static site; no API, no database
 
 ## Local development

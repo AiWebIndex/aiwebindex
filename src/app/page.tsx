@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 
 /*
   Home page. Mission, three CTAs, steward footnote. Intentionally
-  short -- a documentation site's home page should answer
+  short, because a documentation site's home page should answer
   "what is this and where do I go next?" in under 10 seconds.
 */
 

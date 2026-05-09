@@ -4,8 +4,8 @@ import { site } from "@/lib/site";
 /*
   Site navigation. Plain text links across the top, no logo, no
   product chrome. Pattern matches w3.org / schema.org / rfc-editor.org
-  -- the visual identity of a documentation site, not a marketing
-  site. The wordmark is just text ("aiwebindex.org"), styled
+  (the visual identity of a documentation site, not a marketing
+  site). The wordmark is just text ("aiwebindex.org"), styled
   monospace, with the .org suffix in blue.
 */
 

@@ -8,8 +8,8 @@ import "./globals.css";
 /*
   Typography choice (intentional contrast with lyrenth.com):
 
-    Inter         -- sans, used for body, nav, code labels
-    Source Serif  -- serif, used for headings (h1.h-display, h2.h-section)
+    Inter         : sans, used for body, nav, code labels
+    Source Serif  : serif, used for headings (h1.h-display, h2.h-section)
 
   Both via next/font/google so they're self-hosted at build time
   (no FOUT, no third-party CDN dependency, no GDPR concerns about

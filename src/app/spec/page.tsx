@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `${site.name} ${site.protocolVersion} Specification`,
-  description: `The formal specification for ${site.name} ${site.protocolVersion} -- an open protocol for AI-readable web indexing.`,
+  description: `The formal specification for ${site.name} ${site.protocolVersion}, an open protocol for AI-readable web indexing.`,
 };
 
 /*
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 
   Section anchors: every heading carries an id so deep links work
   ("/spec#section-4-2"). The .section-anchor span renders a hidden
-  "§" that becomes visible on hover -- standard documentation
-  affordance.
+  "§" that becomes visible on hover (standard documentation
+  affordance).
 
   Updated: this is the published 1.0 draft; subsequent revisions
   bump the version + add a change-log entry.
@@ -108,8 +108,8 @@ export default function SpecPage() {
           <p>
             {site.name} addresses both: a single User-Agent token any
             compliant crawler sends, and a single JSON shape any compliant
-            implementation returns. The protocol is intentionally minimal --
-            it does not standardize ranking, retrieval, or storage. Those
+            implementation returns. The protocol is intentionally minimal.
+            It does not standardize ranking, retrieval, or storage. Those
             decisions remain with each implementation.
           </p>
 
@@ -508,7 +508,7 @@ aiwi-verify=8a93c5f2...`}</code>
             9. References <Anchor id="section-9" />
           </h2>
           <p>
-            <strong>RFC 2119</strong> &mdash; Key words for use in RFCs to
+            <strong>RFC 2119</strong>: Key words for use in RFCs to
             indicate requirement levels.{" "}
             <a
               href="https://www.rfc-editor.org/rfc/rfc2119"
@@ -519,7 +519,7 @@ aiwi-verify=8a93c5f2...`}</code>
             </a>
           </p>
           <p>
-            <strong>RFC 3339</strong> &mdash; Date and Time on the Internet:
+            <strong>RFC 3339</strong>: Date and Time on the Internet:
             Timestamps.{" "}
             <a
               href="https://www.rfc-editor.org/rfc/rfc3339"
@@ -530,7 +530,7 @@ aiwi-verify=8a93c5f2...`}</code>
             </a>
           </p>
           <p>
-            <strong>RFC 9309</strong> &mdash; Robots Exclusion Protocol.{" "}
+            <strong>RFC 9309</strong>: Robots Exclusion Protocol.{" "}
             <a
               href="https://www.rfc-editor.org/rfc/rfc9309"
               target="_blank"
@@ -540,7 +540,7 @@ aiwi-verify=8a93c5f2...`}</code>
             </a>
           </p>
           <p>
-            <strong>BCP 47</strong> &mdash; Tags for Identifying Languages.{" "}
+            <strong>BCP 47</strong>: Tags for Identifying Languages.{" "}
             <a
               href="https://www.rfc-editor.org/info/bcp47"
               target="_blank"
@@ -550,7 +550,7 @@ aiwi-verify=8a93c5f2...`}</code>
             </a>
           </p>
           <p>
-            <strong>schema.org</strong> &mdash; Structured-data vocabulary.{" "}
+            <strong>schema.org</strong>: Structured-data vocabulary.{" "}
             <a
               href="https://schema.org/"
               target="_blank"

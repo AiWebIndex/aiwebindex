@@ -37,9 +37,9 @@ export default function AboutPage() {
             maxWidth: "60ch",
           }}
         >
-          The web only works because its base layer &mdash; HTML, HTTP, the
-          robots.txt convention, RSS, schema.org &mdash; is open. The way
-          AI systems read the web should be answered the same way: with a
+          The web only works because its base layer (HTML, HTTP, the
+          robots.txt convention, RSS, schema.org) is open. The way AI
+          systems read the web should be answered the same way: with a
           shared protocol, not a captive product.
         </p>
 
@@ -58,10 +58,10 @@ export default function AboutPage() {
             <strong>{site.referenceImpl.name}</strong>, run by{" "}
             {site.steward.legalName}, is a product: a hosted API + dashboards
             that implement the protocol commercially. {site.referenceImpl.name}{" "}
-            is the reference implementation &mdash; useful as a working
-            example, useful as a paid option for teams who want hosted
-            infrastructure rather than running their own. It is one
-            implementation. Not the only valid one.
+            is the reference implementation: useful as a working example,
+            useful as a paid option for teams who want hosted infrastructure
+            rather than running their own. It is one implementation. Not the
+            only valid one.
           </p>
           <p>
             This site exists to make that distinction visible. If{" "}
@@ -77,13 +77,12 @@ export default function AboutPage() {
           </p>
           <blockquote>
             {site.steward.legalName} holds no patents on the {site.name}{" "}
-            protocol&rsquo;s core mechanics &mdash; the User-Agent
-            identifier, the AIDocument format, the verification mechanism
-            &mdash; and pledges not to seek such patents. Implementations
-            are free to build, fork, and extend. {site.steward.legalName}{" "}
-            will not assert intellectual-property claims against
-            implementations that conform to the protocol or that derive
-            new protocols from it.
+            protocol&rsquo;s core mechanics (the User-Agent identifier, the
+            AIDocument format, the verification mechanism) and pledges not
+            to seek such patents. Implementations are free to build, fork,
+            and extend. {site.steward.legalName} will not assert
+            intellectual-property claims against implementations that
+            conform to the protocol or that derive new protocols from it.
           </blockquote>
           <p>
             This pledge is binding for {site.protocolVersion} and any

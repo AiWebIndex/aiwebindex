@@ -7,9 +7,9 @@
   positioning visually distinct from the Lyrenth product brand:
 
     - Lyrenth uses Geist + Instrument Serif on a paper-and-ink palette
-      (warm cream + black + signal-green) -- product / SaaS / editorial.
+      (warm cream + black + signal-green):product / SaaS / editorial.
     - aiwebindex.org uses Inter + Source Serif 4 on a slate / blue-gray
-      palette -- documentation / RFC-editor / standards-body.
+      palette:documentation / RFC-editor / standards-body.
 
   The reader should land on aiwebindex.org and feel "this is a spec
   site, not a marketing site." That visual signal is load-bearing for
@@ -21,14 +21,14 @@
   --color-bg-soft: #f8fafc;        /* slate-50 */
   --color-fg: #0f172a;             /* slate-900 */
   --color-fg-2: #1e293b;           /* slate-800 */
-  --color-muted: #475569;          /* slate-600 -- legible body muted */
-  --color-mute-2: #64748b;         /* slate-500 -- chrome / footers */
+  --color-muted: #475569;          /* slate-600:legible body muted */
+  --color-mute-2: #64748b;         /* slate-500:chrome / footers */
   --color-rule: #e2e8f0;           /* slate-200 */
   --color-rule-2: #cbd5e1;         /* slate-300 */
-  --color-accent: #1e40af;         /* blue-800 -- primary link / accent */
-  --color-accent-2: #2563eb;       /* blue-600 -- hover / button */
-  --color-accent-soft: #eff6ff;    /* blue-50 -- soft backgrounds */
-  --color-code-bg: #0f172a;        /* slate-900 -- inverted code blocks */
+  --color-accent: #1e40af;         /* blue-800:primary link / accent */
+  --color-accent-2: #2563eb;       /* blue-600:hover / button */
+  --color-accent-soft: #eff6ff;    /* blue-50:soft backgrounds */
+  --color-code-bg: #0f172a;        /* slate-900:inverted code blocks */
   --color-code-fg: #e2e8f0;        /* slate-200 */
 
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",

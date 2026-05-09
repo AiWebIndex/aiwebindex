@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   /implementations: a directory of who has shipped against the
   protocol. Today there is exactly one entry (Lyrenth, the reference
   commercial implementation). The structure is laid out so adding
-  more is just an array push -- we don't want this page to require
-  redesign when the second and third implementations land.
+  more is just an array push, no redesign required when the second
+  and third implementations land.
 
   Lyrenth is intentionally listed first AND clearly labeled
   "reference implementation" so a reader doesn't conclude
@@ -100,8 +100,8 @@ export default function ImplementationsPage() {
             {site.name}, email{" "}
             <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>{" "}
             with your conformance details. Listed implementations link out
-            to your own site &mdash; no editorial gatekeeping, just
-            verification that the MUST-level requirements are met.
+            to your own site. No editorial gatekeeping, just verification
+            that the MUST-level requirements are met.
           </p>
         </div>
 

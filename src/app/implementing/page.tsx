@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
   Code samples in three languages (curl / Python / JS) so a reader
   can copy the snippet that matches their stack. Each shows the
-  same thing -- a User-Agent-tagged GET against a target URL --
+  same thing (a User-Agent-tagged GET against a target URL),
   because the protocol-side surface is small.
 */
 
@@ -72,9 +72,8 @@ export default function ImplementingPage() {
             </li>
           </ol>
           <p>
-            Everything else &mdash; storage, queuing, dashboards, billing
-            &mdash; is your product surface. The protocol does not require
-            any of it.
+            Everything else (storage, queuing, dashboards, billing) is your
+            product surface. The protocol does not require any of it.
           </p>
 
           {/* ---- Step 1: tagged HTTP client ---- */}
@@ -328,8 +327,8 @@ async function fetchWithCooldown(url: URL) {
             the reference: a Go API, a Postgres-backed crawl queue, a
             chromedp-based renderer for SPA pages, and a Next.js dashboard
             for site owners. Source for the protocol-relevant bits is on
-            GitHub. Use it to compare behavior &mdash; but the spec is what
-            you implement against, not Lyrenth specifically.
+            GitHub. Use it to compare behavior. But the spec is what you
+            implement against, not Lyrenth specifically.
           </p>
 
           <h2 id="get-listed">Get listed once shipped</h2>
