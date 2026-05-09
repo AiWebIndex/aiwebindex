@@ -18,7 +18,7 @@ This repository hosts:
 - Pure static site; no API, no database
 
 ## Local development
-
+ 
 ```bash
 npm install
 npm run dev      # http://localhost:3000
