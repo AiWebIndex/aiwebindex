@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   independently; Lyrenth is one product that implements it.
 */
 
+type ConformanceGap = {
+  // Short label for the spec requirement that's not yet met,
+  // e.g. "robots.txt Disallow (section 6.1, MUST)".
+  requirement: string;
+  // One-sentence plan + ETA. Honest, not aspirational.
+  status: string;
+};
+
 type Implementation = {
   name: string;
   url: string;
@@ -28,6 +36,17 @@ type Implementation = {
   hostingRegion: string;
   commercial: boolean;
   reference?: boolean;
+  // Conformance disclosure: any spec requirement this implementation
+  // does not yet meet, with a roadmap statement. An empty / absent
+  // array means the implementation claims full conformance to the
+  // current spec version. Listing items here is preferred over
+  // silently misclaiming conformance; the directory is more useful
+  // when readers can trust the conformance pill.
+  conformanceGaps?: ConformanceGap[];
+  // Optional public URL where the implementation maintains its own
+  // conformance / crawler-policy page, for readers who want details
+  // beyond the summary above.
+  conformanceStatusUrl?: string;
 };
 
 const IMPLEMENTATIONS: Implementation[] = [
@@ -40,6 +59,19 @@ const IMPLEMENTATIONS: Implementation[] = [
     hostingRegion: "EU (Frankfurt + Falkenstein)",
     commercial: true,
     reference: true,
+    conformanceGaps: [
+      {
+        requirement: "robots.txt Disallow (section 6.1, MUST)",
+        status:
+          "Not yet enforced at crawl time; on the short-term roadmap. Today the recommended opt-out is firewall blocking or emailing Lyrenth's contact address.",
+      },
+      {
+        requirement: "Crawl-delay (section 6.2, MAY)",
+        status:
+          "Not yet honored; ships alongside Disallow enforcement. Per-domain cooldown is enforced uniformly at 2s today.",
+      },
+    ],
+    conformanceStatusUrl: "https://lyrenth.com/crawler-policy",
   },
 ];
 
@@ -62,9 +94,12 @@ export default function ImplementationsPage() {
           }}
         >
           Products and projects that implement {site.name}{" "}
-          {site.protocolVersion}. Listed implementations conform to the
+          {site.protocolVersion}. Listed implementations target the
           MUST-level requirements in the{" "}
-          <Link href="/spec">specification</Link>.
+          <Link href="/spec">specification</Link>; any conformance
+          gaps an implementation has not yet closed are disclosed
+          per-row below, so the directory stays useful even while
+          the ecosystem matures.
         </p>
 
         <hr className="rule-soft" style={{ marginTop: 32 }} />
@@ -100,8 +135,9 @@ export default function ImplementationsPage() {
             {site.name}, email{" "}
             <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>{" "}
             with your conformance details. Listed implementations link out
-            to your own site. No editorial gatekeeping, just verification
-            that the MUST-level requirements are met.
+            to your own site. No editorial gatekeeping; we verify that
+            the MUST-level requirements are met OR that any gaps are
+            disclosed honestly with a roadmap.
           </p>
         </div>
 
@@ -194,6 +230,59 @@ function ImplementationRow({ impl }: { impl: Implementation }) {
       >
         {impl.summary}
       </p>
+
+      {impl.conformanceGaps && impl.conformanceGaps.length > 0 ? (
+        <div
+          style={{
+            marginTop: 16,
+            padding: "12px 14px",
+            borderRadius: 8,
+            border: "1px solid rgba(180, 100, 0, 0.18)",
+            background: "rgba(255, 200, 100, 0.06)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.78rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              fontFamily: "var(--font-mono)",
+              color: "var(--color-mute-2)",
+            }}
+          >
+            Disclosed conformance gaps
+          </p>
+          <ul
+            style={{
+              margin: "8px 0 0",
+              paddingLeft: "1.2em",
+              fontSize: "0.9rem",
+              lineHeight: 1.55,
+              color: "var(--color-fg-2)",
+            }}
+          >
+            {impl.conformanceGaps.map((g) => (
+              <li key={g.requirement} style={{ marginBottom: 6 }}>
+                <strong style={{ color: "var(--color-fg)" }}>{g.requirement}.</strong>{" "}
+                {g.status}
+              </li>
+            ))}
+          </ul>
+          {impl.conformanceStatusUrl ? (
+            <p style={{ margin: "10px 0 0", fontSize: "0.85rem" }}>
+              Implementation&rsquo;s own status page:{" "}
+              <a
+                href={impl.conformanceStatusUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {impl.conformanceStatusUrl.replace(/^https?:\/\//, "")}
+              </a>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
