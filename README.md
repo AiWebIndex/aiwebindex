@@ -10,6 +10,7 @@ This repository hosts:
 - `/implementing`: practical guide for someone building a conformant crawler
 - `/about`: why open, the patent pledge, governance
 
+
 ## Stack
 
 - Next.js 16 (App Router) + React 19
