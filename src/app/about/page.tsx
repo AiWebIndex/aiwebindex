@@ -118,8 +118,11 @@ export default function AboutPage() {
 
           <h2 id="governance">Governance &amp; revisions</h2>
           <p>
-            {site.protocolVersion} is the first published draft. Future
-            revisions follow a small process:
+            {site.protocolVersion} is the current published draft.
+            Previous major versions remain valid implementation targets
+            for systems already deployed against them; see the spec{" "}
+            <Link href="/spec#version-history">version history</Link> for
+            the changelog. Future revisions follow a small process:
           </p>
           <ul>
             <li>
@@ -141,8 +144,10 @@ export default function AboutPage() {
             </li>
             <li>
               Backwards-compatible additions land in minor versions
-              (1.0 &rarr; 1.1). Breaking changes require a new major
-              version (1.x &rarr; 2.0) with a documented migration path.
+              (2.0 &rarr; 2.1). Breaking changes require a new major
+              version (2.x &rarr; 3.0) with a documented migration path.
+              The 1.0 &rarr; 2.0 transition documented in the spec is
+              the worked example of this rule.
             </li>
             <li>
               {site.steward.legalName} retains editorial discretion only

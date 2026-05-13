@@ -145,56 +145,101 @@ Disallow:`}</code>
           </pre>
 
           {/* ---- Step 3: AIDocument extraction ---- */}
-          <h2 id="step-3">3. Extract an AIDocument</h2>
+          <h2 id="step-3">3. Extract an AIDocument (2.0 grouped envelope)</h2>
           <p>
             Take the fetched HTML and produce the JSON envelope described
-            in <Link href="/spec#section-4">spec section 4</Link>. The
-            minimum required fields are: <code>url</code>,{" "}
-            <code>title</code>, <code>markdown</code>,{" "}
-            <code>headings</code>, <code>links</code>, <code>meta</code>,
-            and <code>crawl</code>.
+            in <Link href="/spec#section-4">spec section 4</Link>. 2.0
+            groups fields under semantic blocks rather than the flat
+            layout used by 1.0. The required top-level groups are:{" "}
+            <code>schema</code>, <code>source</code>, <code>cache</code>,{" "}
+            <code>identity</code>, <code>content</code>,{" "}
+            <code>structure</code>, and <code>signals</code>.{" "}
+            <code>economics</code> is optional. If you&rsquo;re porting
+            from a 1.0 implementation, see{" "}
+            <Link href="/spec#section-4-4">spec section 4.4</Link> for the
+            field-by-field rename map.
           </p>
           <p>
-            Field-by-field:
+            Per-group, in the order you&rsquo;ll typically build them:
           </p>
           <ul>
             <li>
-              <strong>url</strong>: the URL <em>after</em> redirects (
-              <code>r.url</code> in httpx; <code>res.url</code> in fetch).
+              <strong>schema</strong>:{" "}
+              <code>{`{ name: "AIDocument", version: "${site.protocolVersion}" }`}</code>{" "}
+              is the minimum. The optional <code>ref</code> is a content-
+              addressed identifier you compute once over the non-volatile
+              fields; agents can use it to detect unchanged pages across
+              re-crawls without diffing the body.
             </li>
             <li>
-              <strong>title</strong>: prefer <code>og:title</code>, then
-              the first <code>h1</code>, then <code>&lt;title&gt;</code>.
+              <strong>source.url</strong>: the URL <em>after</em> redirects
+              (<code>r.url</code> in httpx; <code>res.url</code> in fetch).
             </li>
             <li>
-              <strong>markdown</strong>: strip boilerplate (nav, footer,
-              ads) and convert the main content. Tools like{" "}
+              <strong>source.freshness_policy</strong>: the policy the
+              CALLER requested (<code>cache_first</code> or{" "}
+              <code>force_refresh</code>). If your implementation has no
+              caching layer, default to{" "}
+              <code>&quot;force_refresh&quot;</code>.
+            </li>
+            <li>
+              <strong>source.fetched_at</strong>: an RFC 3339 timestamp
+              (e.g., <code>2026-05-13T12:34:56Z</code>).
+            </li>
+            <li>
+              <strong>source.render_mode</strong>: <code>&quot;static&quot;</code>{" "}
+              when you served HTML straight off the wire;{" "}
+              <code>&quot;rendered&quot;</code> if you ran a headless
+              browser.
+            </li>
+            <li>
+              <strong>cache</strong>: at minimum{" "}
+              <code>{`{ status: "miss", origin_contacted: true, body_fetched: true }`}</code>{" "}
+              when serving from a fresh fetch. Implementations without a
+              cache always emit{" "}
+              <code>&quot;miss&quot;</code> or{" "}
+              <code>&quot;refreshed&quot;</code>.
+            </li>
+            <li>
+              <strong>identity.title</strong>: prefer <code>og:title</code>,
+              then the first <code>h1</code>, then{" "}
+              <code>&lt;title&gt;</code>.
+            </li>
+            <li>
+              <strong>identity.language</strong>: prefer{" "}
+              <code>html[lang]</code>; otherwise detect.
+            </li>
+            <li>
+              <strong>content.markdown</strong>: strip boilerplate (nav,
+              footer, ads) and convert the main content. Tools like{" "}
               <code>trafilatura</code> (Python) or{" "}
               <code>@mozilla/readability</code> (Node) handle this well.
             </li>
             <li>
-              <strong>headings</strong>: walk the DOM, collect{" "}
+              <strong>structure.headings</strong>: walk the DOM, collect{" "}
               <code>h1</code>-<code>h6</code> in document order with their
               levels.
             </li>
             <li>
-              <strong>links</strong>: collect{" "}
+              <strong>structure.links</strong>: collect{" "}
               <code>&lt;a href&gt;</code> elements; mark{" "}
               <code>internal: true</code> when the link host equals the
               page host.
             </li>
             <li>
-              <strong>meta.language</strong>: prefer{" "}
-              <code>html[lang]</code>; otherwise detect.
+              <strong>signals.has_json_ld</strong>: true if you found any{" "}
+              <code>&lt;script type=&quot;application/ld+json&quot;&gt;</code>{" "}
+              blocks on the page.
             </li>
             <li>
-              <strong>crawl.fetched_at</strong>: an RFC 3339 timestamp
-              (e.g., <code>2026-05-10T12:34:56Z</code>).
+              <strong>signals.heading_hierarchy_ok</strong>: true if there
+              is at least one heading, the first is h1 or h2, and no
+              adjacent levels jump by more than 1.
             </li>
           </ul>
           <p>
             See <Link href="/spec#section-4-3">spec section 4.3</Link> for
-            a complete example.
+            a complete example response.
           </p>
 
           {/* ---- Step 4: verification ---- */}
@@ -293,8 +338,14 @@ async function fetchWithCooldown(url: URL) {
               fetches per spec section 6.3.
             </li>
             <li>
-              AIDocument responses include all required fields per spec
-              section 4.1.
+              AIDocument responses include all seven required top-level
+              groups (<code>schema</code>, <code>source</code>,{" "}
+              <code>cache</code>, <code>identity</code>,{" "}
+              <code>content</code>, <code>structure</code>,{" "}
+              <code>signals</code>) per spec section 4.1, and{" "}
+              <code>schema.version</code> matches the version your
+              implementation conforms to (currently{" "}
+              <code>{site.protocolVersion}</code>).
             </li>
             <li>
               At least one of DNS TXT or .well-known verification is

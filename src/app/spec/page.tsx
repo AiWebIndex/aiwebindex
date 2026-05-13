@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /*
-  The AIWebIndex 1.0 specification. Written in RFC voice: precise,
+  The AIWebIndex 2.0 specification. Written in RFC voice: precise,
   unambiguous, normative language ("MUST", "SHOULD", "MAY" per
   RFC 2119). Section structure mirrors what readers expect from
   Internet drafts so the document feels familiar to standards-aware
@@ -19,8 +19,13 @@ export const metadata: Metadata = {
   "§" that becomes visible on hover (standard documentation
   affordance).
 
-  Updated: this is the published 1.0 draft; subsequent revisions
-  bump the version + add a change-log entry.
+  Versioning: 2.0 is the current major. It supersedes 1.0 by
+  regrouping the flat AIDocument envelope into semantic blocks
+  (schema / source / cache / identity / content / structure /
+  signals / optional economics). Section 4.4 documents the migration
+  field-by-field. The 1.0 spec text remains valid for 1.0
+  implementations; the standards-body rule is that breaking
+  changes require a major bump, which is what 2.0 represents.
 */
 
 function Anchor({ id }: { id: string }) {
@@ -224,137 +229,414 @@ export default function SpecPage() {
           </h3>
           <p>
             An AIDocument is a JSON object representing the structured
-            extraction of a single URL. Conformant implementations{" "}
+            extraction of a single URL. Conformant 2.0 implementations{" "}
             <strong>MUST</strong> return objects with the following top-level
-            fields when describing a fetched page:
+            groups when describing a fetched page:
           </p>
           <pre>
             <code>{`{
-  "url":          "string",          // the FINAL URL after redirects
-  "canonical_url":"string",          // optional; rel="canonical" if present
-  "title":        "string",
-  "description":  "string",          // optional
-  "markdown":     "string",          // cleaned content
-  "headings":     [/* Heading[] */], // h1-h6 in document order
-  "links":        [/* Link[] */],    // outbound links
-  "images":       [/* Image[] */],   // optional
-  "meta":         {/* MetaData */},
-  "structured_data": {/* JSON-LD if present */},
-  "crawl":        {/* CrawlInfo */}
+  "schema":    { /* SchemaInfo */    },  // required
+  "source":    { /* SourceInfo */    },  // required
+  "cache":     { /* CacheInfo */     },  // required
+  "identity":  { /* IdentityInfo */  },  // required
+  "content":   { /* ContentInfo */   },  // required
+  "structure": { /* StructureInfo */ },  // required
+  "signals":   { /* SignalsInfo */   },  // required
+  "economics": { /* EconomicsInfo */ }   // optional
 }`}</code>
           </pre>
           <p>
-            Field names and JSON shapes are stable. Additive changes
-            (new optional fields) are permitted within a major version;
-            removals or renames require a new major version.
+            Top-level groups are a stable contract. Removing a group or
+            renaming a key requires a new major version. Adding a new
+            optional group (or a new optional field inside an existing
+            group) within 2.x is permitted.
+          </p>
+          <p>
+            The grouped layout is the headline change between {site.name}{" "}
+            1.0 and 2.0. The motivation is that AI consumers can route on
+            the block they care about (identity vs. structure vs. cost)
+            without parsing the entire envelope, and the boundaries between
+            &ldquo;what we fetched&rdquo; (<code>source</code>) and{" "}
+            &ldquo;what happened on this call&rdquo; (<code>cache</code>) are
+            explicit instead of implied. See Section 4.4 for a field-by-field
+            migration map from 1.0.
           </p>
 
           <h3 id="section-4-2">
             4.2 Field definitions <Anchor id="section-4-2" />
           </h3>
+
+          <h4 id="section-4-2-schema">schema (required)</h4>
           <p>
-            <strong>url</strong> (string, required). The URL the document
-            represents, after any HTTP redirects. <strong>MUST</strong> be a
-            fully-qualified absolute URL.
+            Identifies the shape and version of the response so consumers
+            can route by version.
           </p>
+          <ul>
+            <li>
+              <strong>name</strong> (string, required).{" "}
+              <strong>MUST</strong> be the literal{" "}
+              <code>&quot;AIDocument&quot;</code>.
+            </li>
+            <li>
+              <strong>version</strong> (string, required). The spec major.minor
+              version the response conforms to. Conformant 2.0 implementations
+              emit <code>&quot;2.0&quot;</code>; conformant 2.x revisions
+              emit the corresponding minor (e.g. <code>&quot;2.1&quot;</code>).
+            </li>
+            <li>
+              <strong>ref</strong> (string, optional). An opaque,
+              content-addressed identifier of the document fingerprint,
+              prefixed with <code>aidoc:</code>. The reference implementation
+              uses <code>aidoc:sha256:&lt;32 hex chars&gt;</code> (a
+              128-bit prefix of a SHA-256 over the non-volatile fields:
+              url, canonical_url, title, description, language,
+              content_type, markdown, headings, links, images,
+              structured_data). The identifier is stable across cache
+              states and re-crawls of an unchanged page.
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-source">source (required)</h4>
           <p>
-            <strong>canonical_url</strong> (string, optional). The value of
-            the <code>&lt;link rel=&quot;canonical&quot;&gt;</code> tag if
-            present in the source page; otherwise omitted.
+            Describes what was fetched and how. Independent of cache state:
+            even on a cache hit, these fields describe the underlying
+            snapshot (which may be older than the current call).
           </p>
+          <ul>
+            <li>
+              <strong>url</strong> (string, required). The URL the document
+              represents, after any HTTP redirects.{" "}
+              <strong>MUST</strong> be a fully-qualified absolute URL.
+            </li>
+            <li>
+              <strong>canonical_url</strong> (string, optional). The value
+              of the <code>&lt;link rel=&quot;canonical&quot;&gt;</code> tag
+              if present in the source page; otherwise omitted.
+            </li>
+            <li>
+              <strong>fetched_at</strong> (string, optional). RFC 3339
+              timestamp of the underlying snapshot. Omitted on documents
+              that predate the field.
+            </li>
+            <li>
+              <strong>render_mode</strong> (string, optional). How the page
+              was rendered. One of <code>&quot;static&quot;</code> (direct
+              HTTP fetch), <code>&quot;rendered&quot;</code> (JS execution
+              was required), or{" "}
+              <code>&quot;static_after_render_failure&quot;</code>{" "}
+              (renderer attempted but fell back to the static HTML).
+            </li>
+            <li>
+              <strong>status_code</strong> (integer, optional). HTTP status
+              from the origin at fetch time.
+            </li>
+            <li>
+              <strong>freshness_policy</strong> (string, required). The
+              policy the CALLER requested for this call. One of{" "}
+              <code>&quot;cache_first&quot;</code> or{" "}
+              <code>&quot;force_refresh&quot;</code>. The outcome lives in{" "}
+              <code>cache.status</code>.
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-cache">cache (required)</h4>
           <p>
-            <strong>title</strong> (string, required). The page title, taken
-            from <code>og:title</code>, the first <code>h1</code>, or the{" "}
-            <code>&lt;title&gt;</code> tag, in that preference order.
+            Describes what happened on the implementation side for{" "}
+            <em>this</em> specific call. The <code>status</code> string is a
+            coarse-grained label; the two booleans are the precise truth.
           </p>
+          <ul>
+            <li>
+              <strong>status</strong> (string, required). One of{" "}
+              <code>&quot;hit&quot;</code> (cached snapshot served, origin
+              not contacted), <code>&quot;miss&quot;</code>{" "}
+              (<code>cache_first</code> policy, no cache hit, body fetched
+              from origin), <code>&quot;refreshed&quot;</code>{" "}
+              (<code>force_refresh</code> policy, body fetched from
+              origin), or <code>&quot;stale_revalidated&quot;</code>{" "}
+              (origin returned <code>304 Not Modified</code>, no body).
+            </li>
+            <li>
+              <strong>origin_contacted</strong> (boolean, required).
+            </li>
+            <li>
+              <strong>body_fetched</strong> (boolean, required).
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-identity">identity (required)</h4>
+          <p>Page-level identity metadata.</p>
+          <ul>
+            <li>
+              <strong>title</strong> (string, optional). The page title,
+              taken from <code>og:title</code>, the first <code>h1</code>,
+              or the <code>&lt;title&gt;</code> tag, in that preference
+              order.
+            </li>
+            <li>
+              <strong>description</strong> (string, optional). Page
+              description from <code>meta[name=description]</code> or{" "}
+              <code>og:description</code>.
+            </li>
+            <li>
+              <strong>language</strong> (string, optional). BCP 47 language
+              tag (e.g. <code>en</code>, <code>en-US</code>,{" "}
+              <code>fr</code>).
+            </li>
+            <li>
+              <strong>content_type</strong> (string, optional).
+              Implementation-classified page-content type (e.g.{" "}
+              <code>article</code>, <code>product</code>,{" "}
+              <code>listing</code>, <code>profile</code>).
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-content">content (required)</h4>
+          <p>The cleaned page body.</p>
+          <ul>
+            <li>
+              <strong>markdown</strong> (string, required). Cleaned,
+              structured markdown of the main page content. Boilerplate
+              (navigation, footers, ads) <strong>SHOULD</strong> be
+              removed. Implementations <strong>MAY</strong> use any
+              extraction algorithm.
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-structure">structure (required)</h4>
           <p>
-            <strong>description</strong> (string, optional). Page description
-            from <code>meta[name=description]</code> or{" "}
-            <code>og:description</code>.
+            Extracted page structure. Every field is optional; a
+            single-paragraph article may legitimately have no links and no
+            images.
           </p>
+          <ul>
+            <li>
+              <strong>headings</strong> (array, optional). Headings in
+              document order. Each entry has{" "}
+              <code>{"{ level: number, text: string, id?: string }"}</code>.
+              Levels are 1-6 corresponding to <code>h1</code>-<code>h6</code>.
+            </li>
+            <li>
+              <strong>links</strong> (array, optional). Outbound{" "}
+              <code>&lt;a href&gt;</code> elements. Each entry has{" "}
+              <code>{"{ url, text?, internal: boolean, rel? }"}</code>. The{" "}
+              <code>internal</code> field is true if the link target&rsquo;s
+              host equals the source page&rsquo;s host.
+            </li>
+            <li>
+              <strong>images</strong> (array, optional).{" "}
+              <code>&lt;img&gt;</code> elements with {`{ url, alt? }`}.
+            </li>
+            <li>
+              <strong>structured_data</strong> (object, optional). Merged
+              JSON-LD payload from{" "}
+              <code>&lt;script type=&quot;application/ld+json&quot;&gt;</code>{" "}
+              blocks. Keys depend on the page and are not enumerated by
+              this spec.
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-signals">signals (required)</h4>
           <p>
-            <strong>markdown</strong> (string, required). Cleaned, structured
-            markdown of the main page content. Boilerplate (navigation,
-            footers, ads) <strong>SHOULD</strong> be removed. Implementations{" "}
-            <strong>MAY</strong> use any extraction algorithm.
+            Per-call quality projection derived from the AIDocument
+            structure. Cheap, deterministic, no implementation-side state
+            lookup. The two booleans are the spec floor any conformant 2.0
+            implementation can compute; integer counts are RECOMMENDED but
+            optional.
           </p>
+          <ul>
+            <li>
+              <strong>word_count</strong> (integer, optional). Word count of
+              the cleaned markdown.
+            </li>
+            <li>
+              <strong>reading_time</strong> (integer, optional). Estimated
+              reading time in minutes.
+            </li>
+            <li>
+              <strong>has_json_ld</strong> (boolean, required). True if the
+              page declared any <code>application/ld+json</code> structured
+              data.
+            </li>
+            <li>
+              <strong>heading_hierarchy_ok</strong> (boolean, required).
+              True if there is at least one heading, the first is h1 or h2,
+              and no adjacent levels jump by more than 1.
+            </li>
+          </ul>
+
+          <h4 id="section-4-2-economics">economics (optional)</h4>
           <p>
-            <strong>headings</strong> (array, required). Headings in document
-            order. Each entry has{" "}
-            <code>{"{ level: number, text: string, id?: string }"}</code>.
-            Levels are 1-6 corresponding to <code>h1</code>-<code>h6</code>.
+            Optional cost-savings projection for AI consumers: compares the
+            tokens used by the cleaned markdown against the tokens an LLM
+            would have consumed processing the raw HTML directly.
+            Implementations <strong>MAY</strong> omit this group entirely;
+            if present, all listed fields are required.
           </p>
-          <p>
-            <strong>links</strong> (array, required). Outbound{" "}
-            <code>&lt;a href&gt;</code> elements. Each entry has{" "}
-            <code>{"{ url, text?, internal: boolean, rel? }"}</code>. The{" "}
-            <code>internal</code> field is true if the link target&rsquo;s
-            host equals the source page&rsquo;s host.
-          </p>
-          <p>
-            <strong>images</strong> (array, optional). <code>&lt;img&gt;</code>{" "}
-            elements with {`{ url, alt? }`}.
-          </p>
-          <p>
-            <strong>meta</strong> (object, required). Derived metadata: at
-            minimum <code>language</code> (BCP 47),{" "}
-            <code>word_count</code> (integer), <code>reading_time</code>{" "}
-            (minutes, integer). Implementations <strong>MAY</strong> include
-            additional fields (<code>author</code>, <code>site_name</code>,{" "}
-            <code>keywords</code>, <code>og_image</code>,{" "}
-            <code>published</code>, <code>modified</code>).
-          </p>
-          <p>
-            <strong>structured_data</strong> (object, optional). JSON-LD
-            blocks extracted from the source page, normalized to a single
-            object whose keys are schema.org type names.
-          </p>
-          <p>
-            <strong>crawl</strong> (object, required). Information about how
-            and when the document was fetched:{" "}
-            <code>fetched_at</code> (RFC 3339 timestamp),{" "}
-            <code>status_code</code> (HTTP integer),{" "}
-            <code>render_mode</code> (<code>&quot;static&quot;</code> or{" "}
-            <code>&quot;rendered&quot;</code>),{" "}
-            <code>fetch_duration_ms</code> (integer),{" "}
-            <code>content_length</code> (integer bytes),{" "}
-            <code>user_agent</code> (string).
-          </p>
+          <ul>
+            <li>
+              <strong>output_tokens_approx</strong> (integer). Approximate
+              token count of <code>content.markdown</code> under a generic
+              LLM tokenizer.
+            </li>
+            <li>
+              <strong>raw_html_tokens_approx</strong> (integer). Approximate
+              token count of the raw HTML body.
+            </li>
+            <li>
+              <strong>token_savings</strong> (integer).{" "}
+              <code>raw_html_tokens_approx - output_tokens_approx</code>.
+            </li>
+            <li>
+              <strong>token_savings_percent</strong> (number).{" "}
+              <code>(token_savings / raw_html_tokens_approx) * 100</code>.
+            </li>
+            <li>
+              <strong>estimated_cost_usd</strong> (object). Object with{" "}
+              <code>our_output</code>, <code>raw_html</code>, and{" "}
+              <code>savings</code> in USD, computed against the model
+              described in <code>pricing_basis</code>.
+            </li>
+            <li>
+              <strong>pricing_basis</strong> (object). Object with{" "}
+              <code>input_price_per_1k_usd</code> (number),{" "}
+              <code>model_class</code> (string, e.g.{" "}
+              <code>&quot;mid-tier&quot;</code>), and optional{" "}
+              <code>note</code> (string). Lets consumers recompute the math
+              against their own model rates.
+            </li>
+          </ul>
 
           <h3 id="section-4-3">
             4.3 Example <Anchor id="section-4-3" />
           </h3>
           <pre>
             <code>{`{
-  "url": "https://example.com/article",
-  "canonical_url": "https://example.com/article",
-  "title": "How HTTP works",
-  "description": "A friendly introduction to HTTP request/response.",
-  "markdown": "# How HTTP works\\n\\nWhen a client...",
-  "headings": [
-    { "level": 1, "text": "How HTTP works" },
-    { "level": 2, "text": "Requests" }
-  ],
-  "links": [
-    { "url": "https://www.rfc-editor.org/rfc/rfc7230",
-      "text": "RFC 7230",
-      "internal": false }
-  ],
-  "meta": {
-    "language": "en",
-    "word_count": 1240,
-    "reading_time": 5
+  "schema": {
+    "name": "AIDocument",
+    "version": "2.0",
+    "ref": "aidoc:sha256:8a93c5f24b1e7d0c3f9a8b2e6d4c1f0e"
   },
-  "crawl": {
-    "fetched_at": "2026-05-10T12:34:56Z",
-    "status_code": 200,
+  "source": {
+    "url": "https://example.com/article",
+    "canonical_url": "https://example.com/article",
+    "fetched_at": "2026-05-13T12:34:56Z",
     "render_mode": "static",
-    "fetch_duration_ms": 412,
-    "content_length": 18402,
-    "user_agent": "AIWebIndex/1.0 (+https://example.com/bot; example-impl)"
+    "status_code": 200,
+    "freshness_policy": "cache_first"
+  },
+  "cache": {
+    "status": "miss",
+    "origin_contacted": true,
+    "body_fetched": true
+  },
+  "identity": {
+    "title": "How HTTP works",
+    "description": "A friendly introduction to HTTP request/response.",
+    "language": "en",
+    "content_type": "article"
+  },
+  "content": {
+    "markdown": "# How HTTP works\\n\\nWhen a client..."
+  },
+  "structure": {
+    "headings": [
+      { "level": 1, "text": "How HTTP works" },
+      { "level": 2, "text": "Requests" }
+    ],
+    "links": [
+      { "url": "https://www.rfc-editor.org/rfc/rfc7230",
+        "text": "RFC 7230",
+        "internal": false }
+    ]
+  },
+  "signals": {
+    "word_count": 1240,
+    "reading_time": 5,
+    "has_json_ld": false,
+    "heading_hierarchy_ok": true
   }
 }`}</code>
           </pre>
+
+          <h3 id="section-4-4">
+            4.4 Migration from 1.0 to 2.0 <Anchor id="section-4-4" />
+          </h3>
+          <p>
+            2.0 reshapes the AIDocument envelope: 1.0&rsquo;s flat field set
+            is grouped under semantic blocks (<code>schema</code>,{" "}
+            <code>source</code>, <code>cache</code>, <code>identity</code>,{" "}
+            <code>content</code>, <code>structure</code>,{" "}
+            <code>signals</code>, optional <code>economics</code>). The
+            rename map for every 1.0 field follows.
+          </p>
+          <pre>
+            <code>{`1.0 path                       2.0 path
+---------------------------    ---------------------------
+url                            source.url
+canonical_url                  source.canonical_url
+title                          identity.title
+description                    identity.description
+markdown                       content.markdown
+headings                       structure.headings
+links                          structure.links
+images                         structure.images
+structured_data                structure.structured_data
+meta.language                  identity.language
+meta.word_count                signals.word_count
+meta.reading_time              signals.reading_time
+crawl.fetched_at               source.fetched_at
+crawl.status_code              source.status_code
+crawl.render_mode              source.render_mode
+crawl.fetch_duration_ms        (dropped; not portable)
+crawl.content_length           (dropped; not portable)
+crawl.user_agent               (dropped; redundant with the request UA)`}</code>
+          </pre>
+          <p>
+            Fields new in 2.0:
+          </p>
+          <ul>
+            <li>
+              <code>schema</code> block. Self-describing version identifier{" "}
+              + content-addressed <code>ref</code>. Lets consumers route by
+              version without inferring the shape.
+            </li>
+            <li>
+              <code>cache</code> block. Per-call cache state (hit / miss /
+              refreshed / stale_revalidated), explicitly separated from the
+              snapshot fields under <code>source</code>.
+            </li>
+            <li>
+              <code>source.freshness_policy</code>. The caller&rsquo;s
+              requested policy, distinct from the cache outcome.
+            </li>
+            <li>
+              <code>identity.content_type</code>.
+              Implementation-classified page type.
+            </li>
+            <li>
+              <code>signals.has_json_ld</code> and{" "}
+              <code>signals.heading_hierarchy_ok</code>. Boolean quality
+              floors guaranteed on every response.
+            </li>
+            <li>
+              <code>economics</code> block. Optional token + USD savings
+              projection.
+            </li>
+          </ul>
+          <p>
+            <strong>Implementer guidance.</strong> 1.0 implementations
+            remain valid 1.0 implementations. There is no requirement to
+            migrate. New implementations <strong>SHOULD</strong> target
+            2.0. Consumers reading AIDocument responses{" "}
+            <strong>SHOULD</strong> discover the version via{" "}
+            <code>schema.version</code> rather than path-presence detection,
+            so future 2.x additions don&rsquo;t break parsers. Mixed
+            consumers that need to read both 1.0 and 2.0 responses{" "}
+            <strong>MAY</strong> distinguish them by the presence of a
+            top-level <code>schema</code> object (2.0+) vs. top-level{" "}
+            <code>url</code> (1.0).
+          </p>
 
           {/* ---- 5 Verification ---- */}
           <h2 id="section-5">
@@ -565,7 +847,33 @@ aiwi-verify=8a93c5f2...`}</code>
             Version history <Anchor id="version-history" />
           </h2>
           <p>
-            <strong>1.0 ({site.publishedDate}).</strong> Initial publication.
+            <strong>2.0 ({site.publishedDate}).</strong> Breaking change to
+            Section 4 (AIDocument format). The flat field set from 1.0 is
+            regrouped under semantic blocks: <code>schema</code>,{" "}
+            <code>source</code>, <code>cache</code>, <code>identity</code>,{" "}
+            <code>content</code>, <code>structure</code>,{" "}
+            <code>signals</code>, optional <code>economics</code>.
+            <code>schema</code> introduces a self-describing version
+            identifier and a content-addressed <code>ref</code>;{" "}
+            <code>cache</code> separates per-call cache state from snapshot
+            metadata; <code>signals</code> guarantees two boolean quality
+            floors (<code>has_json_ld</code>,{" "}
+            <code>heading_hierarchy_ok</code>) on every response;{" "}
+            <code>economics</code> exposes an optional token + USD savings
+            projection. Three 1.0 <code>crawl</code> fields are dropped
+            (<code>fetch_duration_ms</code>, <code>content_length</code>,{" "}
+            <code>user_agent</code>) on the grounds that they are not
+            portable across implementations. Section 4.4 documents the
+            1.0 &rarr; 2.0 migration field-by-field. Sections 1, 2, 3, 5,
+            6, 7, 8, and 9 are unchanged from 1.0.
+          </p>
+          <p>
+            <strong>1.0 (2026-05-10).</strong> Initial publication. Flat
+            AIDocument envelope (<code>url</code>, <code>title</code>,{" "}
+            <code>markdown</code>, <code>headings</code>, <code>links</code>,{" "}
+            <code>meta</code>, <code>crawl</code>). Remains a valid
+            implementation target for systems already deployed against it;
+            new implementations should target 2.0.
           </p>
         </div>
 

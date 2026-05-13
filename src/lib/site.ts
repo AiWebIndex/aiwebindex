@@ -11,7 +11,7 @@ const FALLBACK_URL = "http://localhost:3000";
 
 export const site = {
   name: "AIWebIndex",
-  protocolVersion: "1.0",
+  protocolVersion: "2.0",
   protocolStatus: "Draft",
   tagline: "An open protocol for AI-readable web indexing.",
   description:
@@ -36,5 +36,5 @@ export const site = {
   // repo that hosts this site; once the protocol matures it may move
   // to its own org.
   repo: "https://github.com/lyrenth/aiwebindex",
-  publishedDate: "2026-05-10",
+  publishedDate: "2026-05-13",
 };

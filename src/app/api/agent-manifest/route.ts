@@ -78,23 +78,28 @@ export async function GET() {
         `Independent third-party implementations are welcome and freely able to register.`,
     },
     aidocument_format: {
-      summary: "JSON envelope every conformant implementation returns when describing a fetched page.",
-      required_fields: [
-        "url",
-        "title",
-        "markdown",
-        "headings",
-        "links",
-        "meta",
-        "crawl",
+      summary:
+        "JSON envelope every conformant 2.0 implementation returns when describing a fetched page. " +
+        "2.0 groups fields under semantic blocks (schema / source / cache / identity / content / structure / signals / optional economics); " +
+        "see spec section 4 for field definitions and 4.4 for the 1.0 -> 2.0 migration map.",
+      schema_url: "https://api.lyrenth.com/aidocument.schema.json",
+      required_top_level_groups: [
+        "schema",
+        "source",
+        "cache",
+        "identity",
+        "content",
+        "structure",
+        "signals",
       ],
-      optional_fields: [
-        "canonical_url",
-        "description",
-        "images",
-        "structured_data",
+      optional_top_level_groups: [
+        "economics",
       ],
+      version_field: "schema.version",
+      current_version_value: "2.0",
+      legacy_versions_recognized: ["1.0"],
       reference_url: `${base}/spec#section-4`,
+      migration_url: `${base}/spec#section-4-4`,
     },
     verification_mechanism: {
       summary: "Site owners prove domain ownership via DNS TXT or .well-known file; either method MUST be supported by a conformant implementation.",

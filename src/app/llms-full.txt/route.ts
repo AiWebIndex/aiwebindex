@@ -136,92 +136,261 @@ ${site.name} identifier when performing protocol-driven fetches.
 ### 4.1 Top-level structure
 
 An AIDocument is a JSON object representing the structured extraction
-of a single URL. Conformant implementations MUST return objects with
-the following top-level fields when describing a fetched page:
+of a single URL. Conformant 2.0 implementations MUST return objects
+with the following top-level groups:
 
   {
-    "url":          "string",          // the FINAL URL after redirects
-    "canonical_url":"string",          // optional; rel="canonical" if present
-    "title":        "string",
-    "description":  "string",          // optional
-    "markdown":     "string",          // cleaned content
-    "headings":     [/* Heading[] */], // h1-h6 in document order
-    "links":        [/* Link[] */],    // outbound links
-    "images":       [/* Image[] */],   // optional
-    "meta":         {/* MetaData */},
-    "structured_data": {/* JSON-LD if present */},
-    "crawl":        {/* CrawlInfo */}
+    "schema":    { /* SchemaInfo */    },  // required
+    "source":    { /* SourceInfo */    },  // required
+    "cache":     { /* CacheInfo */     },  // required
+    "identity":  { /* IdentityInfo */  },  // required
+    "content":   { /* ContentInfo */   },  // required
+    "structure": { /* StructureInfo */ },  // required
+    "signals":   { /* SignalsInfo */   },  // required
+    "economics": { /* EconomicsInfo */ }   // optional
   }
 
-Field names and JSON shapes are stable. Additive changes (new
-optional fields) are permitted within a major version; removals or
-renames require a new major version.
+Top-level groups are a stable contract. Removing a group or renaming
+a key requires a new major version. Adding a new optional group (or a
+new optional field inside an existing group) within 2.x is permitted.
+
+The grouped layout is the headline change between ${site.name} 1.0 and
+2.0: AI consumers can route on the block they care about (identity vs
+structure vs cost) without parsing the entire envelope, and the
+boundaries between "what we fetched" (source) and "what happened on
+this call" (cache) are explicit instead of implied. See Section 4.4
+for the 1.0 -> 2.0 migration map.
 
 ### 4.2 Field definitions
+
+#### schema (required)
+
+Identifies the shape and version of the response so consumers can
+route by version.
+
+- name (string, required). MUST be the literal "AIDocument".
+- version (string, required). The spec major.minor version the
+  response conforms to. Conformant 2.0 implementations emit "2.0";
+  conformant 2.x revisions emit the corresponding minor (e.g. "2.1").
+- ref (string, optional). An opaque, content-addressed identifier of
+  the document fingerprint, prefixed with "aidoc:". The reference
+  implementation uses "aidoc:sha256:<32 hex chars>" (a 128-bit prefix
+  of a SHA-256 over the non-volatile fields: url, canonical_url, title,
+  description, language, content_type, markdown, headings, links,
+  images, structured_data). Stable across cache states and re-crawls
+  of an unchanged page.
+
+#### source (required)
+
+Describes what was fetched and how. Independent of cache state: even
+on a cache hit, these fields describe the underlying snapshot (which
+may be older than the current call).
 
 - url (string, required). The URL the document represents, after any
   HTTP redirects. MUST be a fully-qualified absolute URL.
 - canonical_url (string, optional). The value of the
   <link rel="canonical"> tag if present in the source page; otherwise
   omitted.
-- title (string, required). The page title, taken from og:title, the
+- fetched_at (string, optional). RFC 3339 timestamp of the underlying
+  snapshot. Omitted on documents that predate the field.
+- render_mode (string, optional). How the page was rendered. One of
+  "static" (direct HTTP fetch), "rendered" (JS execution was
+  required), or "static_after_render_failure" (renderer attempted but
+  fell back to the static HTML).
+- status_code (integer, optional). HTTP status from the origin at
+  fetch time.
+- freshness_policy (string, required). The policy the CALLER
+  requested for this call. One of "cache_first" or "force_refresh".
+  The outcome lives in cache.status.
+
+#### cache (required)
+
+Describes what happened on the implementation side for THIS specific
+call. The status string is a coarse-grained label; the two booleans
+are the precise truth.
+
+- status (string, required). One of "hit" (cached snapshot served,
+  origin not contacted), "miss" (cache_first policy, no cache hit,
+  body fetched from origin), "refreshed" (force_refresh policy, body
+  fetched from origin), or "stale_revalidated" (origin returned
+  304 Not Modified, no body).
+- origin_contacted (boolean, required).
+- body_fetched (boolean, required).
+
+#### identity (required)
+
+Page-level identity metadata.
+
+- title (string, optional). The page title, taken from og:title, the
   first h1, or the <title> tag, in that preference order.
 - description (string, optional). Page description from
   meta[name=description] or og:description.
+- language (string, optional). BCP 47 language tag (e.g. en, en-US,
+  fr).
+- content_type (string, optional). Implementation-classified
+  page-content type (e.g. article, product, listing, profile).
+
+#### content (required)
+
+The cleaned page body.
+
 - markdown (string, required). Cleaned, structured markdown of the
   main page content. Boilerplate (navigation, footers, ads) SHOULD be
   removed. Implementations MAY use any extraction algorithm.
-- headings (array, required). Headings in document order. Each entry
+
+#### structure (required)
+
+Extracted page structure. Every field is optional; a single-paragraph
+article may legitimately have no links and no images.
+
+- headings (array, optional). Headings in document order. Each entry
   has { level: number, text: string, id?: string }. Levels are 1-6
   corresponding to h1-h6.
-- links (array, required). Outbound <a href> elements. Each entry has
+- links (array, optional). Outbound <a href> elements. Each entry has
   { url, text?, internal: boolean, rel? }. The internal field is true
   if the link target's host equals the source page's host.
 - images (array, optional). <img> elements with { url, alt? }.
-- meta (object, required). Derived metadata: at minimum language
-  (BCP 47), word_count (integer), reading_time (minutes, integer).
-  Implementations MAY include additional fields (author, site_name,
-  keywords, og_image, published, modified).
-- structured_data (object, optional). JSON-LD blocks extracted from
-  the source page, normalized to a single object whose keys are
-  schema.org type names.
-- crawl (object, required). Information about how and when the
-  document was fetched: fetched_at (RFC 3339 timestamp), status_code
-  (HTTP integer), render_mode ("static" or "rendered"),
-  fetch_duration_ms (integer), content_length (integer bytes),
-  user_agent (string).
+- structured_data (object, optional). Merged JSON-LD payload from
+  <script type="application/ld+json"> blocks. Keys depend on the page
+  and are not enumerated by this spec.
+
+#### signals (required)
+
+Per-call quality projection derived from the AIDocument structure.
+Cheap, deterministic, no implementation-side state lookup. The two
+booleans are the spec floor any conformant 2.0 implementation can
+compute; integer counts are RECOMMENDED but optional.
+
+- word_count (integer, optional). Word count of the cleaned markdown.
+- reading_time (integer, optional). Estimated reading time in minutes.
+- has_json_ld (boolean, required). True if the page declared any
+  application/ld+json structured data.
+- heading_hierarchy_ok (boolean, required). True if there is at least
+  one heading, the first is h1 or h2, and no adjacent levels jump by
+  more than 1.
+
+#### economics (optional)
+
+Optional cost-savings projection for AI consumers: compares the tokens
+used by the cleaned markdown against the tokens an LLM would have
+consumed processing the raw HTML directly. Implementations MAY omit
+this group entirely; if present, all listed fields are required.
+
+- output_tokens_approx (integer). Approximate token count of
+  content.markdown under a generic LLM tokenizer.
+- raw_html_tokens_approx (integer). Approximate token count of the
+  raw HTML body.
+- token_savings (integer). raw_html_tokens_approx -
+  output_tokens_approx.
+- token_savings_percent (number). (token_savings /
+  raw_html_tokens_approx) * 100.
+- estimated_cost_usd (object). Object with our_output, raw_html, and
+  savings in USD, computed against the model described in
+  pricing_basis.
+- pricing_basis (object). Object with input_price_per_1k_usd (number),
+  model_class (string, e.g. "mid-tier"), and optional note (string).
+  Lets consumers recompute the math against their own model rates.
 
 ### 4.3 Example
 
   {
-    "url": "https://example.com/article",
-    "canonical_url": "https://example.com/article",
-    "title": "How HTTP works",
-    "description": "A friendly introduction to HTTP request/response.",
-    "markdown": "# How HTTP works\\n\\nWhen a client...",
-    "headings": [
-      { "level": 1, "text": "How HTTP works" },
-      { "level": 2, "text": "Requests" }
-    ],
-    "links": [
-      { "url": "https://www.rfc-editor.org/rfc/rfc7230",
-        "text": "RFC 7230",
-        "internal": false }
-    ],
-    "meta": {
-      "language": "en",
-      "word_count": 1240,
-      "reading_time": 5
+    "schema": {
+      "name": "AIDocument",
+      "version": "2.0",
+      "ref": "aidoc:sha256:8a93c5f24b1e7d0c3f9a8b2e6d4c1f0e"
     },
-    "crawl": {
-      "fetched_at": "2026-05-10T12:34:56Z",
-      "status_code": 200,
+    "source": {
+      "url": "https://example.com/article",
+      "canonical_url": "https://example.com/article",
+      "fetched_at": "2026-05-13T12:34:56Z",
       "render_mode": "static",
-      "fetch_duration_ms": 412,
-      "content_length": 18402,
-      "user_agent": "${site.name}/${site.protocolVersion} (+https://example.com/bot; example-impl)"
+      "status_code": 200,
+      "freshness_policy": "cache_first"
+    },
+    "cache": {
+      "status": "miss",
+      "origin_contacted": true,
+      "body_fetched": true
+    },
+    "identity": {
+      "title": "How HTTP works",
+      "description": "A friendly introduction to HTTP request/response.",
+      "language": "en",
+      "content_type": "article"
+    },
+    "content": {
+      "markdown": "# How HTTP works\\n\\nWhen a client..."
+    },
+    "structure": {
+      "headings": [
+        { "level": 1, "text": "How HTTP works" },
+        { "level": 2, "text": "Requests" }
+      ],
+      "links": [
+        { "url": "https://www.rfc-editor.org/rfc/rfc7230",
+          "text": "RFC 7230",
+          "internal": false }
+      ]
+    },
+    "signals": {
+      "word_count": 1240,
+      "reading_time": 5,
+      "has_json_ld": false,
+      "heading_hierarchy_ok": true
     }
   }
+
+### 4.4 Migration from 1.0 to 2.0
+
+2.0 reshapes the AIDocument envelope: 1.0's flat field set is grouped
+under semantic blocks (schema, source, cache, identity, content,
+structure, signals, optional economics). The rename map for every 1.0
+field follows.
+
+  1.0 path                       2.0 path
+  ---------------------------    ---------------------------
+  url                            source.url
+  canonical_url                  source.canonical_url
+  title                          identity.title
+  description                    identity.description
+  markdown                       content.markdown
+  headings                       structure.headings
+  links                          structure.links
+  images                         structure.images
+  structured_data                structure.structured_data
+  meta.language                  identity.language
+  meta.word_count                signals.word_count
+  meta.reading_time              signals.reading_time
+  crawl.fetched_at               source.fetched_at
+  crawl.status_code              source.status_code
+  crawl.render_mode              source.render_mode
+  crawl.fetch_duration_ms        (dropped; not portable)
+  crawl.content_length           (dropped; not portable)
+  crawl.user_agent               (dropped; redundant with the request UA)
+
+Fields new in 2.0:
+
+- schema block. Self-describing version identifier + content-
+  addressed ref. Lets consumers route by version without inferring
+  the shape.
+- cache block. Per-call cache state (hit / miss / refreshed /
+  stale_revalidated), explicitly separated from the snapshot fields
+  under source.
+- source.freshness_policy. The caller's requested policy, distinct
+  from the cache outcome.
+- identity.content_type. Implementation-classified page type.
+- signals.has_json_ld and signals.heading_hierarchy_ok. Boolean
+  quality floors guaranteed on every response.
+- economics block. Optional token + USD savings projection.
+
+Implementer guidance: 1.0 implementations remain valid 1.0
+implementations. There is no requirement to migrate. New
+implementations SHOULD target 2.0. Consumers reading AIDocument
+responses SHOULD discover the version via schema.version rather than
+path-presence detection, so future 2.x additions don't break parsers.
+Mixed consumers that need to read both 1.0 and 2.0 responses MAY
+distinguish them by the presence of a top-level "schema" object (2.0+)
+vs. top-level "url" (1.0).
 
 ## 5. Verification mechanism
 
@@ -329,7 +498,23 @@ opaque tokens, not human identifiers, in those records.
 
 ## Version history
 
-- ${site.protocolVersion} (${site.publishedDate}). Initial publication.
+- 2.0 (${site.publishedDate}). Breaking change to Section 4
+  (AIDocument format). The flat field set from 1.0 is regrouped under
+  semantic blocks: schema, source, cache, identity, content,
+  structure, signals, optional economics. schema introduces a
+  self-describing version identifier and a content-addressed ref;
+  cache separates per-call cache state from snapshot metadata;
+  signals guarantees two boolean quality floors (has_json_ld,
+  heading_hierarchy_ok) on every response; economics exposes an
+  optional token + USD savings projection. Three 1.0 crawl fields are
+  dropped (fetch_duration_ms, content_length, user_agent) on the
+  grounds that they are not portable across implementations. Section
+  4.4 documents the 1.0 -> 2.0 migration field-by-field. Sections 1,
+  2, 3, 5, 6, 7, 8, and 9 are unchanged from 1.0.
+- 1.0 (2026-05-10). Initial publication. Flat AIDocument envelope
+  (url, title, markdown, headings, links, meta, crawl). Remains a
+  valid implementation target for systems already deployed against it;
+  new implementations should target 2.0.
 
 ================================================================
 PART 2: IMPLEMENTER'S GUIDE
