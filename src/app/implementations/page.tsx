@@ -59,18 +59,10 @@ const IMPLEMENTATIONS: Implementation[] = [
     hostingRegion: "EU (Frankfurt + Falkenstein)",
     commercial: true,
     reference: true,
-    conformanceGaps: [
-      {
-        requirement: "robots.txt Disallow (section 6.1, MUST)",
-        status:
-          "Not yet enforced at crawl time; on the short-term roadmap. Today the recommended opt-out is firewall blocking or emailing Lyrenth's contact address.",
-      },
-      {
-        requirement: "Crawl-delay (section 6.2, MAY)",
-        status:
-          "Not yet honored; ships alongside Disallow enforcement. Per-domain cooldown is enforced uniformly at 2s today.",
-      },
-    ],
+    // No conformance gaps disclosed. The Lyrenth crawler enforces
+    // robots.txt Disallow (section 6.1, MUST) and honors Crawl-delay
+    // (section 6.2, MAY) as of the 026 migration / RFC 9309 commit.
+    // Operational details live on the linked status page below.
     conformanceStatusUrl: "https://lyrenth.com/crawler-policy",
   },
 ];
@@ -269,19 +261,22 @@ function ImplementationRow({ impl }: { impl: Implementation }) {
               </li>
             ))}
           </ul>
-          {impl.conformanceStatusUrl ? (
-            <p style={{ margin: "10px 0 0", fontSize: "0.85rem" }}>
-              Implementation&rsquo;s own status page:{" "}
-              <a
-                href={impl.conformanceStatusUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {impl.conformanceStatusUrl.replace(/^https?:\/\//, "")}
-              </a>
-            </p>
-          ) : null}
         </div>
+      ) : null}
+
+      {impl.conformanceStatusUrl ? (
+        <p style={{ margin: "12px 0 0", fontSize: "0.85rem", color: "var(--color-fg-2)" }}>
+          {impl.conformanceGaps && impl.conformanceGaps.length > 0
+            ? "Implementation’s own status page: "
+            : "Conformance status page: "}
+          <a
+            href={impl.conformanceStatusUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {impl.conformanceStatusUrl.replace(/^https?:\/\//, "")}
+          </a>
+        </p>
       ) : null}
     </div>
   );
