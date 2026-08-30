@@ -33,7 +33,11 @@ type Implementation = {
   url: string;
   audience: string; // who it's for
   summary: string;
-  hostingRegion: string;
+  // Jurisdiction only. Datacenter locations are an operational detail of
+  // someone else's business and do not belong in a protocol directory.
+  jurisdiction: string;
+  // Which conformance profile the implementation claims (spec Section 2).
+  profile: "Core" | "Verified";
   commercial: boolean;
   reference?: boolean;
   // Conformance disclosure: any spec requirement this implementation
@@ -56,7 +60,8 @@ const IMPLEMENTATIONS: Implementation[] = [
     audience: "AI agent builders, site owners, anyone needing extracted web pages",
     summary:
       "Hosted API + dashboards with verified-domain ownership, per-page caching, and a free tier. Operated by Aleksma AI Inc. as the protocol's steward; serves as the reference for all required behaviors.",
-    hostingRegion: "EU (Frankfurt + Falkenstein)",
+    jurisdiction: "EU",
+    profile: "Verified",
     commercial: true,
     reference: true,
     // No conformance gaps disclosed. The Lyrenth crawler enforces
@@ -92,6 +97,21 @@ export default function ImplementationsPage() {
           gaps an implementation has not yet closed are disclosed
           per-row below, so the directory stays useful even while
           the ecosystem matures.
+        </p>
+        <p
+          style={{
+            marginTop: 16,
+            color: "var(--color-mute)",
+            maxWidth: "60ch",
+          }}
+        >
+          Each row shows the conformance profile the implementation claims.{" "}
+          <strong>Core</strong> means the User-Agent, the AIDocument envelope
+          and domain verification. <strong>Verified</strong> adds the checks a
+          site operator can run without trusting anyone: signed requests,
+          published crawl addresses, and forward-confirmed reverse DNS. See{" "}
+          <Link href="/spec#section-2">Section 2</Link> and{" "}
+          <Link href="/spec#section-6-4">Section 6.4</Link>.
         </p>
 
         <hr className="rule-soft" style={{ marginTop: 32 }} />
@@ -196,8 +216,9 @@ function ImplementationRow({ impl }: { impl: Implementation }) {
           {impl.reference ? (
             <span className="pill pill-blue">Reference</span>
           ) : null}
+          <span className="pill pill-blue">{impl.profile}</span>
           <span className="pill">{impl.commercial ? "Commercial" : "Open source"}</span>
-          <span className="pill">{impl.hostingRegion}</span>
+          <span className="pill">{impl.jurisdiction}</span>
         </div>
       </div>
       <p
