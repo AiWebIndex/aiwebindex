@@ -37,4 +37,8 @@ export const site = {
   // to its own org.
   repo: "https://github.com/lyrenth/aiwebindex",
   publishedDate: "2026-05-13",
+  // Editorial revision of the same 2.0 document. Bumped when the text
+  // changes without changing the AIDocument envelope, which is why the
+  // protocol version above stays put. See spec Section 4.2 on schema.version.
+  revisedDate: "2026-08-30",
 };

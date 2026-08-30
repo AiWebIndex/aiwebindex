@@ -56,6 +56,7 @@ export default function SpecPage() {
         >
           <span className="pill pill-blue">{site.protocolStatus}</span>
           <span className="pill">Published {site.publishedDate}</span>
+          <span className="pill">Revised {site.revisedDate}</span>
           <span className="pill">Editor: {site.steward.legalName}</span>
         </div>
 
@@ -178,9 +179,27 @@ export default function SpecPage() {
             only when, they appear in all capitals.
           </p>
           <p>
-            An implementation conforms to {site.name} {site.protocolVersion}{" "}
-            if it satisfies all the MUST-level requirements in sections 3, 4,
-            and 5 of this document.
+            This specification defines two conformance profiles. An
+            implementation states which profile it claims.
+          </p>
+          <p>
+            <strong>{site.name} {site.protocolVersion} Core.</strong> An
+            implementation conforms to Core if it satisfies all the MUST-level
+            requirements in sections 3, 4, and 5 of this document.
+          </p>
+          <p>
+            <strong>{site.name} {site.protocolVersion} Verified.</strong> An
+            implementation conforms to Verified if it satisfies Core and, in
+            addition, all the MUST-level requirements in Section 6.4. Verified
+            exists because a User-Agent string is a claim rather than a proof:
+            any client can send one. Section 6.4 defines what a site operator
+            can check independently, so that permitting a crawler is a decision
+            about a verifiable identity rather than about a header.
+          </p>
+          <p>
+            Core remains a complete and useful conformance level. Nothing in
+            Verified changes the AIDocument envelope, and an implementation may
+            adopt it at any time without a version change.
           </p>
 
           {/* ---- 3 User-Agent ---- */}
@@ -212,6 +231,12 @@ export default function SpecPage() {
           <pre>
             <code>{`User-Agent: ${site.name}/${site.protocolVersion} verification (+https://example.com/bot)`}</code>
           </pre>
+          <p>
+            The User-Agent is a claim, not a proof. Implementations
+            claiming the Verified profile additionally publish signed
+            requests, crawl addresses, and reverse DNS so that the claim can
+            be checked independently (Section 6.4).
+          </p>
           <p>
             Implementations <strong>MUST NOT</strong> impersonate other
             User-Agent strings (browsers, search crawlers, generic libraries)
@@ -278,8 +303,11 @@ export default function SpecPage() {
               <code>&quot;AIDocument&quot;</code>.
             </li>
             <li>
-              <strong>version</strong> (string, required). The spec major.minor
-              version the response conforms to. Conformant 2.0 implementations
+              <strong>version</strong> (string, required). The AIDocument
+              format version the response conforms to. It identifies the shape
+              of this envelope, not the revision date of this document: an
+              editorial revision that leaves the envelope unchanged does not
+              change this value. Conformant 2.0 implementations
               emit <code>&quot;2.0&quot;</code>; conformant 2.x revisions
               emit the corresponding minor (e.g. <code>&quot;2.1&quot;</code>).
             </li>
@@ -729,6 +757,81 @@ aiwi-verify=8a93c5f2...`}</code>
             <code>503 Service Unavailable</code> the same way.
           </p>
 
+          <h3 id="section-6-4">
+            6.4 Crawler identity verification <Anchor id="section-6-4" />
+          </h3>
+          <p>
+            The requirements in this subsection apply to implementations
+            claiming the <strong>Verified</strong> profile (Section 2). A
+            Core implementation <strong>MAY</strong> satisfy them and{" "}
+            <strong>SHOULD</strong> work toward doing so.
+          </p>
+          <p>
+            Section 3 defines the identity a crawler <em>claims</em>. This
+            subsection defines what a site operator can <em>check</em>. The two
+            are different: a User-Agent header can be sent by any client, so on
+            its own it distinguishes cooperative crawlers from each other but
+            not from anything pretending to be one. Each mechanism below is
+            independently verifiable by the site operator, without contacting
+            the implementation and without trusting it.
+          </p>
+
+          <h4 id="section-6-4-1">6.4.1 Signed requests</h4>
+          <p>
+            Verified implementations <strong>MUST</strong> sign crawl requests
+            using HTTP Message Signatures (RFC 9421) and{" "}
+            <strong>MUST</strong> publish the corresponding public keys as a
+            key directory served over HTTPS at a stable, documented URL. The
+            signature <strong>MUST</strong> cover enough of the request for a
+            verifier to bind it to that request rather than to a replayed one.
+          </p>
+          <p>
+            A site operator verifies a request by fetching the key directory
+            and checking the signature. A forged User-Agent fails this check.
+          </p>
+
+          <h4 id="section-6-4-2">6.4.2 Published crawl addresses</h4>
+          <p>
+            Verified implementations <strong>MUST</strong> publish the IP
+            addresses their crawlers fetch from, in a machine-readable format,
+            at a stable URL served over HTTPS. The document{" "}
+            <strong>MUST</strong> be retrievable without authentication and{" "}
+            <strong>SHOULD</strong> be linked from the implementation
+            information page named in the User-Agent (Section 3).
+          </p>
+          <p>
+            Implementations <strong>SHOULD</strong> update the published list
+            before fetching from a new address, so that an operator
+            allowlisting the list does not begin refusing legitimate traffic.
+          </p>
+
+          <h4 id="section-6-4-3">6.4.3 Forward-confirmed reverse DNS</h4>
+          <p>
+            Every address a Verified implementation crawls from{" "}
+            <strong>MUST</strong> resolve, in reverse, to a hostname under a
+            domain the implementation controls, and that hostname{" "}
+            <strong>MUST</strong> resolve forward to the same address. This is
+            the check search crawlers have offered for two decades and it costs
+            an operator two DNS lookups.
+          </p>
+
+          <h4 id="section-6-4-4">6.4.4 Why these three</h4>
+          <p>
+            The three mechanisms fail independently, which is the point. A
+            signature proves the request was made by the holder of a key. A
+            published address list lets an operator decide before any request
+            arrives. Reverse DNS answers the question at the moment a request
+            is received, with no prior configuration. An operator may rely on
+            any one of them.
+          </p>
+          <p>
+            None of the three is expensive to implement. Publishing a list of
+            addresses is a static file, reverse DNS is a registrar
+            configuration, and RFC 9421 signing is available as a library in
+            every language a crawler is likely to be written in. The profile
+            exists to make crawler identity checkable, not to raise a barrier.
+          </p>
+
           {/* ---- 7 Security ---- */}
           <h2 id="section-7">
             7. Security considerations <Anchor id="section-7" />
@@ -846,6 +949,19 @@ aiwi-verify=8a93c5f2...`}</code>
           <h2 id="version-history">
             Version history <Anchor id="version-history" />
           </h2>
+          <p>
+            <strong>2.0, revised ({site.revisedDate}).</strong> Editorial
+            revision. Section 2 defines two conformance profiles, Core and
+            Verified. New Section 6.4 states what a Verified implementation
+            publishes so that its identity can be checked independently:
+            signed requests (RFC 9421), machine-readable crawl addresses, and
+            forward-confirmed reverse DNS. Section 4.2 clarifies that{" "}
+            <code>schema.version</code> identifies the AIDocument envelope
+            rather than the revision date of this document. The envelope is
+            unchanged, so conformant implementations continue to emit{" "}
+            <code>&quot;2.0&quot;</code> and no implementation falls out of
+            conformance.
+          </p>
           <p>
             <strong>2.0 ({site.publishedDate}).</strong> Breaking change to
             Section 4 (AIDocument format). The flat field set from 1.0 is
